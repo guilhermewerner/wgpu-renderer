@@ -1,5 +1,3 @@
-// Copyright (c) TribuFu. All Rights Reserved.
-
 #![allow(non_snake_case)]
 
 use bytemuck::{Pod, Zeroable};

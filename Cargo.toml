@@ -1,0 +1,23 @@
+[package]
+name = "renderer"
+version = "0.0.1"
+description = "WGPU Renderer"
+repository = "https://github.com/GuilhermeWerner/Renderer"
+license = "MIT"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "Renderer"
+path = "Source/Main.rs"
+doc = false
+
+[dependencies]
+bytemuck = { version = "1.4", features = [ "derive" ] }
+cgmath = "0.18"
+env_logger = "0.9"
+image = "0.23"
+log = "0.4"
+pollster = "0.2"
+wgpu = "0.11"
+winit = "0.25"

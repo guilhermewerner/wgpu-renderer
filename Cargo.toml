@@ -7,6 +7,8 @@ license = "MIT"
 edition = "2021"
 publish = false
 
+default-run = "Renderer"
+
 [[bin]]
 name = "Renderer"
 path = "Source/Main.rs"

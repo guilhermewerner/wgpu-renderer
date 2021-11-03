@@ -11,6 +11,10 @@ publish = false
 name = "Renderer"
 path = "Source/Main.rs"
 
+[[bin]]
+name = "Rainbow"
+path = "Source/Rainbow.rs"
+
 [dependencies]
 anyhow = "1.0"
 bytemuck = { version = "1.4", features = [ "derive" ] }

@@ -10,9 +10,9 @@ publish = false
 [[bin]]
 name = "Renderer"
 path = "Source/Main.rs"
-doc = false
 
 [dependencies]
+anyhow = "1.0"
 bytemuck = { version = "1.4", features = [ "derive" ] }
 cgmath = "0.18"
 env_logger = "0.9"

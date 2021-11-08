@@ -1,22 +1,22 @@
-use crate::{Material, Mesh, Model};
+use super::{Material, Mesh, Model};
 use std::ops::Range;
 
 pub trait DrawModel<'a> {
-    fn draw_mesh(
+    fn DrawMesh(
         &mut self,
         mesh: &'a Mesh,
         material: &'a Material,
         camera_bind_group: &'a wgpu::BindGroup,
     );
-    fn draw_mesh_instanced(
+    fn DrawMeshInstanced(
         &mut self,
         mesh: &'a Mesh,
         material: &'a Material,
         instances: Range<u32>,
         camera_bind_group: &'a wgpu::BindGroup,
     );
-    fn draw_model(&mut self, model: &'a Model, camera_bind_group: &'a wgpu::BindGroup);
-    fn draw_model_instanced(
+    fn DrawModel(&mut self, model: &'a Model, camera_bind_group: &'a wgpu::BindGroup);
+    fn DrawModelInstanced(
         &mut self,
         model: &'a Model,
         instances: Range<u32>,
@@ -25,16 +25,16 @@ pub trait DrawModel<'a> {
 }
 
 impl<'a> DrawModel<'a> for wgpu::RenderPass<'a> {
-    fn draw_mesh(
+    fn DrawMesh(
         &mut self,
         mesh: &'a Mesh,
         material: &'a Material,
         camera_bind_group: &'a wgpu::BindGroup,
     ) {
-        self.draw_mesh_instanced(mesh, material, 0..1, camera_bind_group);
+        self.DrawMeshInstanced(mesh, material, 0..1, camera_bind_group);
     }
 
-    fn draw_mesh_instanced(
+    fn DrawMeshInstanced(
         &mut self,
         mesh: &'a Mesh,
         material: &'a Material,
@@ -48,11 +48,11 @@ impl<'a> DrawModel<'a> for wgpu::RenderPass<'a> {
         self.draw_indexed(0..mesh.num_elements, 0, instances);
     }
 
-    fn draw_model(&mut self, model: &'a Model, camera_bind_group: &'a wgpu::BindGroup) {
-        self.draw_model_instanced(model, 0..1, camera_bind_group);
+    fn DrawModel(&mut self, model: &'a Model, camera_bind_group: &'a wgpu::BindGroup) {
+        self.DrawModelInstanced(model, 0..1, camera_bind_group);
     }
 
-    fn draw_model_instanced(
+    fn DrawModelInstanced(
         &mut self,
         model: &'a Model,
         instances: Range<u32>,
@@ -60,7 +60,7 @@ impl<'a> DrawModel<'a> for wgpu::RenderPass<'a> {
     ) {
         for mesh in &model.meshes {
             let material = &model.materials[mesh.material];
-            self.draw_mesh_instanced(mesh, material, instances.clone(), camera_bind_group);
+            self.DrawMeshInstanced(mesh, material, instances.clone(), camera_bind_group);
         }
     }
 }

@@ -1,4 +1,4 @@
-// Vertex shader
+// Vertex
 
 struct InstanceInput {
     [[location(5)]] model_matrix_0: vec4<f32>;
@@ -44,7 +44,7 @@ fn main(
     return out;
 }
 
-// Fragment shader
+// Fragment
 
 [[group(0), binding(0)]]
 var t_diffuse: texture_2d<f32>;

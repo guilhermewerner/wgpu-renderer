@@ -16,7 +16,7 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn to_raw(&self) -> InstanceRaw {
+    pub fn ToRaw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position)
                 * cgmath::Matrix4::from(self.rotation))
@@ -32,7 +32,7 @@ pub struct InstanceRaw {
 }
 
 impl InstanceRaw {
-    pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+    pub fn GetDescriptor<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
             // We need to switch from using a step mode of Vertex to Instance

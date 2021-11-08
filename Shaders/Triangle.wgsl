@@ -1,4 +1,4 @@
-// Vertex shader
+// Vertex
 
 struct VertexInput {
     [[location(0)]] position: vec3<f32>;
@@ -20,7 +20,7 @@ fn main(
     return out;
 }
 
-// Fragment shader
+// Fragment
 
 [[stage(fragment)]]
 fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {

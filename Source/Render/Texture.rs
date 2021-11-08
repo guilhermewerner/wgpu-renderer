@@ -2,6 +2,21 @@ use anyhow::*;
 use image::GenericImageView;
 use std::path::Path;
 
+/// Texture coordinates.
+///
+/// ```no_run
+///  (0.0)               (1.0)
+///   V1 ----------------- V2
+///   |                   / |
+///   |     Q1         /    |
+///   |             /       |
+///   |          /          |
+///   |       /             |
+///   |    /         Q2     |
+///   | /                   |
+///   V3 ----------------- V4
+///  (0.1)               (1.1)
+/// ```
 pub struct Texture {
     pub texture: wgpu::Texture,
     pub view: wgpu::TextureView,
@@ -10,7 +25,8 @@ pub struct Texture {
 
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
-    pub fn load<P: AsRef<Path>>(
+
+    pub fn Load<P: AsRef<Path>>(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         path: P,
@@ -20,20 +36,20 @@ impl Texture {
         let label = path_copy.to_str();
         let img = image::open(path)?;
 
-        Self::from_image(device, queue, &img, label)
+        Self::FromImage(device, queue, &img, label)
     }
 
-    pub fn from_bytes(
+    pub fn FromBytes(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         bytes: &[u8],
         label: &str,
     ) -> Result<Self> {
         let img = image::load_from_memory(bytes)?;
-        Self::from_image(device, queue, &img, Some(label))
+        Self::FromImage(device, queue, &img, Some(label))
     }
 
-    pub fn from_image(
+    pub fn FromImage(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         img: &image::DynamicImage,
@@ -93,7 +109,7 @@ impl Texture {
         })
     }
 
-    pub fn create_depth_texture(
+    pub fn CreateDepthTexture(
         device: &wgpu::Device,
         config: &wgpu::SurfaceConfiguration,
         label: &str,

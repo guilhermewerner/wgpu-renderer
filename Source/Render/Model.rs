@@ -1,5 +1,5 @@
-use crate::Texture;
-use crate::{Material, Mesh, Vertex};
+use super::Texture;
+use super::{Material, Mesh, Vertex};
 use anyhow::Result;
 use bytemuck::{Pod, Zeroable};
 use std::path::Path;
@@ -12,7 +12,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn load<P: AsRef<Path>>(
+    pub fn Load<P: AsRef<Path>>(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         layout: &wgpu::BindGroupLayout,
@@ -36,7 +36,7 @@ impl Model {
         for mat in obj_materials {
             let diffuse_path = mat.diffuse_texture;
             let diffuse_texture =
-                Texture::load(device, queue, containing_folder.join(diffuse_path))?;
+                Texture::Load(device, queue, containing_folder.join(diffuse_path))?;
 
             let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
                 layout,
@@ -112,7 +112,7 @@ pub struct ModelVertex {
 }
 
 impl Vertex for ModelVertex {
-    fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+    fn GetDescriptor<'a>() -> wgpu::VertexBufferLayout<'a> {
         use std::mem;
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<ModelVertex>() as wgpu::BufferAddress,

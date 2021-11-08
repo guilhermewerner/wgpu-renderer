@@ -7,22 +7,18 @@ license = "MIT"
 edition = "2021"
 publish = false
 
-default-run = "Renderer"
-
 [lib]
-name = "Renderer"
+name = "Graphics"
 crate-type = ["rlib"]
 path = "Source/lib.rs"
 
-[[bin]]
-name = "Renderer"
-path = "Source/Main.rs"
-doc = false
+[[example]]
+name = "Cubes"
+path = "Examples/Cubes.rs"
 
-[[bin]]
-name = "Rainbow"
-path = "Source/Rainbow.rs"
-doc = false
+[[example]]
+name = "Triangle"
+path = "Examples/Triangle.rs"
 
 [dependencies]
 anyhow = "1.0"

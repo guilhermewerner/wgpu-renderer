@@ -1,4 +1,4 @@
-use crate::Texture;
+use super::Texture;
 
 pub struct Material {
     pub name: String,

@@ -4,10 +4,10 @@
 use anyhow::Result;
 use bytemuck::{Pod, Zeroable};
 use std::time::Duration;
-use wgpu::util::DeviceExt;
 use winit::event::*;
 use Graphics::Render::*;
-use Graphics::{Display, Runtime, State};
+use Graphics::Shader::*;
+use Graphics::{Runtime, State};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Pod, Zeroable)]
@@ -17,20 +17,23 @@ struct TriangleVertex {
 }
 
 impl Vertex for TriangleVertex {
-    fn GetDescriptor<'a>() -> wgpu::VertexBufferLayout<'a> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<TriangleVertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
+    fn GetLayout() -> VertexBufferLayout {
+        VertexBufferLayout {
+            label: "Triangle".into(),
+            stride: std::mem::size_of::<TriangleVertex>(),
+            step_mode: StepMode::Vertex,
+            attributes: vec![
+                VertexAttribute {
+                    label: "Position".into(),
+                    format: VertexFormat::Float32x3,
                     offset: 0,
                     shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
                 },
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                VertexAttribute {
+                    label: "Color".into(),
+                    format: VertexFormat::Float32x3,
+                    offset: std::mem::size_of::<[f32; 3]>(),
                     shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x3,
                 },
             ],
         }
@@ -57,84 +60,100 @@ struct Triangle {
 }
 
 impl State for Triangle {
-    fn Init(display: &Display) -> Result<Self> {
+    fn Init(renderer: &Renderer) -> Result<Self> {
         // Shader
 
-        let shader = display
-            .device
-            .create_shader_module(&wgpu::ShaderModuleDescriptor {
-                label: Some("Shader"),
-                source: wgpu::ShaderSource::Wgsl(include_str!("../Shaders/Triangle.wgsl").into()),
-            });
+        let shader = Shader::FromWgsl(include_str!("../Shaders/Triangle.wgsl"));
+        let shader_module = renderer.SubmitShader(&shader);
 
         // Pipeline
 
         let render_pipeline_layout =
-            display
+            renderer
                 .device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                    label: Some("Render Pipeline Layout"),
+                    label: Some("RENDER_PIPELINE_LAYOUT"),
                     bind_group_layouts: &[],
                     push_constant_ranges: &[],
                 });
 
-        let render_pipeline =
-            display
+        let render_pipeline = {
+            let mut layout = TriangleVertex::GetLayout();
+
+            let attributes = layout
+                .attributes
+                .drain(..)
+                .map(|x| x.into())
+                .collect::<Vec<_>>();
+
+            let wgpu_layout = wgpu::VertexBufferLayout {
+                array_stride: layout.stride as wgpu::BufferAddress,
+                step_mode: layout.step_mode.into(),
+                attributes: attributes.as_ref(),
+            };
+
+            renderer
                 .device
                 .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                    label: Some("Render Pipeline"),
+                    label: Some("RENDER_PIPELINE"),
                     layout: Some(&render_pipeline_layout),
                     vertex: wgpu::VertexState {
-                        module: &shader,
+                        module: &shader_module,
                         entry_point: "main",
-                        buffers: &[TriangleVertex::GetDescriptor()],
+                        buffers: &[wgpu::VertexBufferLayout {
+                            array_stride: std::mem::size_of::<TriangleVertex>()
+                                as wgpu::BufferAddress,
+                            step_mode: wgpu::VertexStepMode::Vertex,
+                            attributes: &[
+                                wgpu::VertexAttribute {
+                                    offset: 0,
+                                    shader_location: 0,
+                                    format: wgpu::VertexFormat::Float32x3,
+                                },
+                                wgpu::VertexAttribute {
+                                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                                    shader_location: 1,
+                                    format: wgpu::VertexFormat::Float32x3,
+                                },
+                            ],
+                        }],
                     },
                     fragment: Some(wgpu::FragmentState {
-                        // 3.
-                        module: &shader,
+                        module: &shader_module,
                         entry_point: "main",
                         targets: &[wgpu::ColorTargetState {
-                            // 4.
-                            format: display.config.format,
+                            format: renderer.config.format,
                             blend: Some(wgpu::BlendState::REPLACE),
                             write_mask: wgpu::ColorWrites::ALL,
                         }],
                     }),
                     primitive: wgpu::PrimitiveState {
-                        topology: wgpu::PrimitiveTopology::TriangleList, // 1.
+                        topology: wgpu::PrimitiveTopology::TriangleList,
                         strip_index_format: None,
-                        front_face: wgpu::FrontFace::Ccw, // 2.
+                        front_face: wgpu::FrontFace::Ccw,
                         cull_mode: Some(wgpu::Face::Back),
-                        // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                         polygon_mode: wgpu::PolygonMode::Fill,
-                        // Requires Features::DEPTH_CLAMPING
                         clamp_depth: false,
-                        // Requires Features::CONSERVATIVE_RASTERIZATION
                         conservative: false,
                     },
-                    depth_stencil: None, // 1.
+                    depth_stencil: None,
                     multisample: wgpu::MultisampleState {
-                        count: 1,                         // 2.
-                        mask: !0,                         // 3.
-                        alpha_to_coverage_enabled: false, // 4.
+                        count: 1,
+                        mask: !0,
+                        alpha_to_coverage_enabled: false,
                     },
-                });
+                })
+        };
 
-        let vertex_buffer = display
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
+        let vertex_buffer = renderer.SubmitVertexBuffer(&VertexBuffer {
+            label: "Vertex Buffer".into(),
+            content: bytemuck::cast_slice(VERTICES).to_vec(),
+        });
 
-        let index_buffer = display
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
-                usage: wgpu::BufferUsages::INDEX,
-            });
+        let index_buffer = renderer.SubmitIndexBuffer(&IndexBuffer {
+            label: "Index Buffer".into(),
+            content: bytemuck::cast_slice(INDICES).to_vec(),
+        });
 
         let num_indices = INDICES.len() as u32;
 
@@ -146,56 +165,23 @@ impl State for Triangle {
         })
     }
 
-    fn Input(&mut self, display: &Display, event: &WindowEvent) -> bool {
+    fn Input(&mut self, renderer: &Renderer, event: &WindowEvent) -> bool {
         false
     }
 
-    fn Update(&mut self, display: &Display, delta: Duration) {}
+    fn Update(&mut self, renderer: &Renderer, delta: Duration) {}
 
-    fn Resize(&mut self, display: &Display) {}
+    fn Resize(&mut self, renderer: &Renderer) {}
 
-    fn Draw(&mut self, display: &mut Display) -> Result<(), wgpu::SurfaceError> {
-        let output = display.surface.get_current_texture().unwrap();
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = display
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
-
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[
-                    // This is what [[location(0)]] in the fragment shader targets
-                    wgpu::RenderPassColorAttachment {
-                        view: &view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: 0.0,
-                                g: 0.0,
-                                b: 0.0,
-                                a: 1.0,
-                            }),
-                            store: true,
-                        },
-                    },
-                ],
-                depth_stencil_attachment: None,
-            });
-
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
-        }
-
-        display.queue.submit(std::iter::once(encoder.finish()));
-        output.present();
+    fn Draw(&mut self, renderer: &mut Renderer) -> Result<(), wgpu::SurfaceError> {
+        renderer
+            .Draw(
+                &self.render_pipeline,
+                &self.vertex_buffer,
+                &self.index_buffer,
+                self.num_indices,
+            )
+            .unwrap();
 
         Ok(())
     }

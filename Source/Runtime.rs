@@ -1,4 +1,5 @@
-use crate::{Display, State};
+use crate::Render::Renderer;
+use crate::State;
 use anyhow::Result;
 use std::time::Instant;
 use winit::dpi::LogicalSize;
@@ -20,9 +21,9 @@ impl Runtime {
             .with_inner_size(LogicalSize::new(1280, 720))
             .build(&event_loop)?;
 
-        let mut display = pollster::block_on(Display::New(window))?;
+        let mut renderer = pollster::block_on(Renderer::New(window))?;
 
-        let mut app = T::Init(&display)?;
+        let mut app = T::Init(&renderer)?;
 
         let mut last_update = Instant::now();
 
@@ -41,20 +42,20 @@ impl Runtime {
                 Event::Resumed => is_resumed = true,
                 Event::Suspended => is_resumed = false,
                 Event::RedrawRequested(window_id) => {
-                    if window_id == display.window.id() {
+                    if window_id == renderer.window.id() {
                         let now = Instant::now();
                         let delta = now - last_update;
                         last_update = now;
 
-                        app.Update(&display, delta);
+                        app.Update(&renderer, delta);
 
-                        match app.Draw(&mut display) {
+                        match app.Draw(&mut renderer) {
                             Ok(_) => {}
                             // Reconfigure the surface if lost
                             Err(wgpu::SurfaceError::Lost) => {
-                                let size = display.window.inner_size();
-                                display.Resize(size.width, size.height);
-                                app.Resize(&display);
+                                let size = renderer.window.inner_size();
+                                renderer.Resize(size.width, size.height);
+                                app.Resize(&renderer);
                             }
                             // The system is out of memory, we should probably quit
                             Err(wgpu::SurfaceError::OutOfMemory) => {
@@ -69,15 +70,15 @@ impl Runtime {
                 }
                 Event::MainEventsCleared => {
                     if is_focused && is_resumed && !is_redraw_requested {
-                        display.window.request_redraw();
+                        renderer.window.request_redraw();
                         is_redraw_requested = true;
                     } else {
                         // Freeze time while the app is not in the foreground
                         last_update = Instant::now();
                     }
                 }
-                Event::WindowEvent { event, window_id } if window_id == display.window.id() => {
-                    if !app.Input(&display, &event) {
+                Event::WindowEvent { event, window_id } if window_id == renderer.window.id() => {
+                    if !app.Input(&renderer, &event) {
                         match event {
                             WindowEvent::CloseRequested
                             | WindowEvent::KeyboardInput {
@@ -91,12 +92,12 @@ impl Runtime {
                             } => *control_flow = ControlFlow::Exit,
                             WindowEvent::Focused(focused) => is_focused = focused,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                                display.Resize(new_inner_size.width, new_inner_size.height);
-                                app.Resize(&display);
+                                renderer.Resize(new_inner_size.width, new_inner_size.height);
+                                app.Resize(&renderer);
                             }
                             WindowEvent::Resized(physical_size) => {
-                                display.Resize(physical_size.width, physical_size.height);
-                                app.Resize(&display);
+                                renderer.Resize(physical_size.width, physical_size.height);
+                                app.Resize(&renderer);
                             }
                             _ => {}
                         }

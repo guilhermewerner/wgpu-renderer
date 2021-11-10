@@ -1,11 +1,9 @@
 #![allow(non_snake_case)]
 
 pub mod Camera;
+pub mod Color;
 pub mod Render;
-
-#[path = "Display.rs"]
-mod _Display;
-pub use self::_Display::*;
+pub mod Shader;
 
 #[path = "Runtime.rs"]
 mod _Runtime;

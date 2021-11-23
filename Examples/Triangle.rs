@@ -54,8 +54,8 @@ const INDICES: &[u16] = &[
 
 struct Triangle {
     render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
+    vertex_buffer: VertexBuffer,
+    index_buffer: IndexBuffer,
     num_indices: u32,
 }
 
@@ -64,7 +64,8 @@ impl State for Triangle {
         // Shader
 
         let shader = Shader::FromWgsl(include_str!("../Shaders/Triangle.wgsl"));
-        let shader_module = renderer.SubmitShader(&shader);
+
+        renderer.CreateShader(&shader);
 
         // Pipeline
 
@@ -100,23 +101,7 @@ impl State for Triangle {
                     vertex: wgpu::VertexState {
                         module: &shader_module,
                         entry_point: "main",
-                        buffers: &[wgpu::VertexBufferLayout {
-                            array_stride: std::mem::size_of::<TriangleVertex>()
-                                as wgpu::BufferAddress,
-                            step_mode: wgpu::VertexStepMode::Vertex,
-                            attributes: &[
-                                wgpu::VertexAttribute {
-                                    offset: 0,
-                                    shader_location: 0,
-                                    format: wgpu::VertexFormat::Float32x3,
-                                },
-                                wgpu::VertexAttribute {
-                                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                                    shader_location: 1,
-                                    format: wgpu::VertexFormat::Float32x3,
-                                },
-                            ],
-                        }],
+                        buffers: &[wgpu_layout],
                     },
                     fragment: Some(wgpu::FragmentState {
                         module: &shader_module,
@@ -145,15 +130,19 @@ impl State for Triangle {
                 })
         };
 
-        let vertex_buffer = renderer.SubmitVertexBuffer(&VertexBuffer {
+        let vertex_buffer = VertexBuffer {
             label: "Vertex Buffer".into(),
             content: bytemuck::cast_slice(VERTICES).to_vec(),
-        });
+        };
 
-        let index_buffer = renderer.SubmitIndexBuffer(&IndexBuffer {
+        renderer.CreateVertexBuffer(&vertex_buffer);
+
+        let index_buffer = IndexBuffer {
             label: "Index Buffer".into(),
             content: bytemuck::cast_slice(INDICES).to_vec(),
-        });
+        };
+
+        renderer.CreateIndexBuffer(&index_buffer);
 
         let num_indices = INDICES.len() as u32;
 

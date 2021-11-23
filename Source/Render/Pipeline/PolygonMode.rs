@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// Type of drawing mode for polygons
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum PolygonMode {

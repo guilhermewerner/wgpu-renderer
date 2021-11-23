@@ -1,3 +1,5 @@
+pub mod Pipeline;
+
 //#[path = "DrawModel.rs"]
 //mod _DrawModel;
 //pub use self::_DrawModel::*;
@@ -17,10 +19,6 @@ pub use self::_IndexFormat::*;
 //#[path = "Model.rs"]
 //mod _Model;
 //pub use self::_Model::*;
-
-#[path = "PolygonMode.rs"]
-mod _PolygonMode;
-pub use self::_PolygonMode::*;
 
 #[path = "Renderer.rs"]
 mod _Renderer;

@@ -1,6 +1,7 @@
 use super::{IndexBuffer, UniformBuffer, VertexBuffer};
 use crate::Shader::Shader;
 use anyhow::Result;
+use std::collections::HashMap;
 use wgpu::util::DeviceExt;
 use winit::window::Window;
 
@@ -10,6 +11,11 @@ pub struct Renderer {
     pub config: wgpu::SurfaceConfiguration,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
+    pub pipelines: HashMap<String, wgpu::RenderPipeline>,
+    pub shaders: HashMap<String, wgpu::ShaderModule>,
+    pub vertex_buffers: HashMap<String, wgpu::Buffer>,
+    pub index_buffers: HashMap<String, wgpu::Buffer>,
+    pub uniform_buffers: HashMap<String, wgpu::Buffer>,
 }
 
 impl Renderer {
@@ -56,44 +62,61 @@ impl Renderer {
             config,
             device,
             queue,
+            pipelines: HashMap::new(),
+            shaders: HashMap::new(),
+            vertex_buffers: HashMap::new(),
+            index_buffers: HashMap::new(),
+            uniform_buffers: HashMap::new(),
         })
     }
 
-    pub fn SubmitShader(&self, shader: &Shader) -> wgpu::ShaderModule {
+    pub fn CreateShader(&mut self, shader: &Shader) {
         let src = shader.source.WgslToString().unwrap();
 
-        self.device
-            .create_shader_module(&wgpu::ShaderModuleDescriptor {
-                label: Some(&shader.label),
-                source: wgpu::ShaderSource::Wgsl(src.as_str().into()),
-            })
+        self.shaders.insert(
+            shader.label.to_string(),
+            self.device
+                .create_shader_module(&wgpu::ShaderModuleDescriptor {
+                    label: Some(&shader.label),
+                    source: wgpu::ShaderSource::Wgsl(src.as_str().into()),
+                }),
+        );
     }
 
-    pub fn SubmitVertexBuffer(&self, vertex_buffer: &VertexBuffer) -> wgpu::Buffer {
-        self.device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some(&vertex_buffer.label),
-                contents: vertex_buffer.content.as_ref(),
-                usage: wgpu::BufferUsages::VERTEX,
-            })
+    pub fn CreateVertexBuffer(&mut self, vertex_buffer: &VertexBuffer) {
+        self.vertex_buffers.insert(
+            vertex_buffer.label.to_string(),
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some(&vertex_buffer.label),
+                    contents: vertex_buffer.content.as_ref(),
+                    usage: wgpu::BufferUsages::VERTEX,
+                }),
+        );
     }
 
-    pub fn SubmitIndexBuffer(&self, index_buffer: &IndexBuffer) -> wgpu::Buffer {
-        self.device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some(&index_buffer.label),
-                contents: index_buffer.content.as_ref(),
-                usage: wgpu::BufferUsages::INDEX,
-            })
+    pub fn CreateIndexBuffer(&mut self, index_buffer: &IndexBuffer) {
+        self.index_buffers.insert(
+            index_buffer.label.to_string(),
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some(&index_buffer.label),
+                    contents: index_buffer.content.as_ref(),
+                    usage: wgpu::BufferUsages::INDEX,
+                }),
+        );
     }
 
-    pub fn SubmitUniformBuffer(&self, uniform_buffer: &UniformBuffer) -> wgpu::Buffer {
-        self.device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some(&uniform_buffer.label),
-                contents: uniform_buffer.content.as_ref(),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-            })
+    pub fn CreateUniformBuffer(&mut self, uniform_buffer: &UniformBuffer) {
+        self.uniform_buffers.insert(
+            uniform_buffer.label.to_string(),
+            self.device
+                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some(&uniform_buffer.label),
+                    contents: uniform_buffer.content.as_ref(),
+                    usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                }),
+        );
     }
 
     pub fn Draw(

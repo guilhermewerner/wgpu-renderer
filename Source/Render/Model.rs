@@ -1,5 +1,6 @@
-use super::Texture;
-use super::{Material, Mesh, Vertex};
+use super::{
+    Material, Mesh, StepMode, Texture, Vertex, VertexAttribute, VertexBufferLayout, VertexFormat,
+};
 use anyhow::Result;
 use bytemuck::{Pod, Zeroable};
 use std::path::Path;
@@ -112,26 +113,30 @@ pub struct ModelVertex {
 }
 
 impl Vertex for ModelVertex {
-    fn GetDescriptor<'a>() -> wgpu::VertexBufferLayout<'a> {
+    fn GetLayout() -> VertexBufferLayout {
         use std::mem;
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<ModelVertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
+        VertexBufferLayout {
+            label: "Model".into(),
+            stride: mem::size_of::<ModelVertex>(),
+            step_mode: StepMode::Vertex,
+            attributes: vec![
+                VertexAttribute {
+                    label: "Position".into(),
+                    format: VertexFormat::Float32x3,
                     offset: 0,
                     shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
                 },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                VertexAttribute {
+                    label: "Position".into(),
                     shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x2,
+                    offset: mem::size_of::<[f32; 3]>(),
+                    format: VertexFormat::Float32x2,
                 },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 5]>() as wgpu::BufferAddress,
+                VertexAttribute {
+                    label: "Color".into(),
                     shader_location: 2,
-                    format: wgpu::VertexFormat::Float32x3,
+                    offset: mem::size_of::<[f32; 5]>(),
+                    format: VertexFormat::Float32x3,
                 },
             ],
         }

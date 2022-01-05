@@ -23,7 +23,7 @@ impl Runtime {
 
         let mut renderer = pollster::block_on(Renderer::New(window))?;
 
-        let mut app = T::Init(&renderer)?;
+        let mut app = T::Init(&mut renderer)?;
 
         let mut last_update = Instant::now();
 
@@ -47,7 +47,7 @@ impl Runtime {
                         let delta = now - last_update;
                         last_update = now;
 
-                        app.Update(&renderer, delta);
+                        app.Update(&mut renderer, delta);
 
                         match app.Draw(&mut renderer) {
                             Ok(_) => {}
@@ -55,7 +55,7 @@ impl Runtime {
                             Err(wgpu::SurfaceError::Lost) => {
                                 let size = renderer.window.inner_size();
                                 renderer.Resize(size.width, size.height);
-                                app.Resize(&renderer);
+                                app.Resize(&mut renderer);
                             }
                             // The system is out of memory, we should probably quit
                             Err(wgpu::SurfaceError::OutOfMemory) => {
@@ -78,7 +78,7 @@ impl Runtime {
                     }
                 }
                 Event::WindowEvent { event, window_id } if window_id == renderer.window.id() => {
-                    if !app.Input(&renderer, &event) {
+                    if !app.Input(&mut renderer, &event) {
                         match event {
                             WindowEvent::CloseRequested
                             | WindowEvent::KeyboardInput {
@@ -93,11 +93,11 @@ impl Runtime {
                             WindowEvent::Focused(focused) => is_focused = focused,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                                 renderer.Resize(new_inner_size.width, new_inner_size.height);
-                                app.Resize(&renderer);
+                                app.Resize(&mut renderer);
                             }
                             WindowEvent::Resized(physical_size) => {
                                 renderer.Resize(physical_size.width, physical_size.height);
-                                app.Resize(&renderer);
+                                app.Resize(&mut renderer);
                             }
                             _ => {}
                         }

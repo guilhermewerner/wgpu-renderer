@@ -6,8 +6,8 @@ pub const NUM_INSTANCES: u32 = NUM_INSTANCES_PER_ROW * NUM_INSTANCES_PER_ROW;
 
 pub const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
-    0.0,
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
+    0.0
 );
 
 pub struct Instance {
@@ -32,7 +32,7 @@ pub struct InstanceRaw {
 }
 
 impl InstanceRaw {
-    pub fn GetDescriptor<'a>() -> wgpu::VertexBufferLayout<'a> {
+    pub fn GetLayout<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
             // We need to switch from using a step mode of Vertex to Instance

@@ -22,12 +22,12 @@ impl Renderer {
     pub async fn New(window: Window) -> Result<Self> {
         let size = window.inner_size();
 
-        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
         let surface = unsafe { instance.create_surface(&window) };
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
+                power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: Some(&surface),
                 force_fallback_adapter: false,
             })
@@ -122,10 +122,13 @@ impl Renderer {
     pub fn Draw(
         &self,
         pipeline: &wgpu::RenderPipeline,
-        vertex_buffer: &wgpu::Buffer,
-        index_buffer: &wgpu::Buffer,
+        vertex_buffer: &str,
+        index_buffer: &str,
         num_indices: u32,
     ) -> Result<()> {
+        let vertex_buffer = self.vertex_buffers.get(vertex_buffer).unwrap();
+        let index_buffer = self.index_buffers.get(index_buffer).unwrap();
+
         let output = self.surface.get_current_texture()?;
 
         let view = output

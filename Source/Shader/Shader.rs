@@ -30,7 +30,7 @@ impl Shader {
 
     pub fn FromGlsl(stage: ShaderStage, glsl: &str) -> Self {
         Self {
-            label: "".into(),
+            label: "Glsl".into(),
             source: ShaderSource::Glsl(glsl.to_string()),
             stage,
         }
@@ -38,7 +38,7 @@ impl Shader {
 
     pub fn FromWgsl(wgsl: &str) -> Self {
         Self {
-            label: "".into(),
+            label: "Wgsl".into(),
             source: ShaderSource::Wgsl(wgsl.to_string()),
             stage: ShaderStage::Multiple,
         }

@@ -60,7 +60,7 @@ struct Triangle {
 }
 
 impl State for Triangle {
-    fn Init(renderer: &Renderer) -> Result<Self> {
+    fn Init(renderer: &mut Renderer) -> Result<Self> {
         // Shader
 
         let shader = Shader::FromWgsl(include_str!("../Shaders/Triangle.wgsl"));
@@ -99,12 +99,12 @@ impl State for Triangle {
                     label: Some("RENDER_PIPELINE"),
                     layout: Some(&render_pipeline_layout),
                     vertex: wgpu::VertexState {
-                        module: &shader_module,
+                        module: renderer.shaders.get("Wgsl").unwrap(),
                         entry_point: "main",
                         buffers: &[wgpu_layout],
                     },
                     fragment: Some(wgpu::FragmentState {
-                        module: &shader_module,
+                        module: renderer.shaders.get("Wgsl").unwrap(),
                         entry_point: "main",
                         targets: &[wgpu::ColorTargetState {
                             format: renderer.config.format,
@@ -154,20 +154,20 @@ impl State for Triangle {
         })
     }
 
-    fn Input(&mut self, renderer: &Renderer, event: &WindowEvent) -> bool {
+    fn Input(&mut self, renderer: &mut Renderer, event: &WindowEvent) -> bool {
         false
     }
 
-    fn Update(&mut self, renderer: &Renderer, delta: Duration) {}
+    fn Update(&mut self, renderer: &mut Renderer, delta: Duration) {}
 
-    fn Resize(&mut self, renderer: &Renderer) {}
+    fn Resize(&mut self, renderer: &mut Renderer) {}
 
     fn Draw(&mut self, renderer: &mut Renderer) -> Result<(), wgpu::SurfaceError> {
         renderer
             .Draw(
                 &self.render_pipeline,
-                &self.vertex_buffer,
-                &self.index_buffer,
+                "Vertex Buffer",
+                "Index Buffer",
                 self.num_indices,
             )
             .unwrap();

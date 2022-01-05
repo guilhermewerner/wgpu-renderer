@@ -1,24 +1,24 @@
 pub mod Pipeline;
 
-//#[path = "DrawModel.rs"]
-//mod _DrawModel;
-//pub use self::_DrawModel::*;
+#[path = "DrawModel.rs"]
+mod _DrawModel;
+pub use self::_DrawModel::*;
 
 #[path = "IndexFormat.rs"]
 mod _IndexFormat;
 pub use self::_IndexFormat::*;
 
-//#[path = "Instance.rs"]
-//mod _Instance;
-//pub use self::_Instance::*;
+#[path = "Instance.rs"]
+mod _Instance;
+pub use self::_Instance::*;
 
-//#[path = "Material.rs"]
-//mod _Material;
-//pub use self::_Material::*;
+#[path = "Material.rs"]
+mod _Material;
+pub use self::_Material::*;
 
-//#[path = "Model.rs"]
-//mod _Model;
-//pub use self::_Model::*;
+#[path = "Model.rs"]
+mod _Model;
+pub use self::_Model::*;
 
 #[path = "Renderer.rs"]
 mod _Renderer;
@@ -28,13 +28,13 @@ pub use self::_Renderer::*;
 mod _StepMode;
 pub use self::_StepMode::*;
 
-//#[path = "Mesh.rs"]
-//mod _Mesh;
-//pub use self::_Mesh::*;
+#[path = "Mesh.rs"]
+mod _Mesh;
+pub use self::_Mesh::*;
 
-//#[path = "Texture.rs"]
-//mod _Texture;
-//pub use self::_Texture::*;
+#[path = "Texture.rs"]
+mod _Texture;
+pub use self::_Texture::*;
 
 #[path = "Vertex.rs"]
 mod _Vertex;

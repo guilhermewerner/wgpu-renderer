@@ -9,7 +9,7 @@ use wgpu::util::DeviceExt;
 use winit::event::*;
 use Graphics::Camera::*;
 use Graphics::Render::*;
-use Graphics::{Display, Runtime, State};
+use Graphics::{Runtime, State};
 
 struct Cubes {
     render_pipeline: wgpu::RenderPipeline,
@@ -25,9 +25,9 @@ struct Cubes {
 }
 
 impl State for Cubes {
-    fn Init(display: &Display) -> Result<Self> {
+    fn Init(renderer: &mut Renderer) -> Result<Self> {
         let texture_bind_group_layout =
-            display
+            renderer
                 .device
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                     entries: &[
@@ -60,7 +60,7 @@ impl State for Cubes {
             eye: (0.0, 5.0, -10.0).into(),
             target: (0.0, 0.0, 0.0).into(),
             up: cgmath::Vector3::unit_y(),
-            aspect: display.config.width as f32 / display.config.height as f32,
+            aspect: renderer.config.width as f32 / renderer.config.height as f32,
             fovy: 45.0,
             znear: 0.1,
             zfar: 100.0,
@@ -71,7 +71,7 @@ impl State for Cubes {
         let mut camera_uniform = CameraUniform::New();
         camera_uniform.UpdateViewProjection(&camera);
 
-        let camera_buffer = display
+        let camera_buffer = renderer
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Camera Buffer"),
@@ -104,7 +104,7 @@ impl State for Cubes {
 
         let instance_data = instances.iter().map(Instance::ToRaw).collect::<Vec<_>>();
         let instance_buffer =
-            display
+            renderer
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("Instance Buffer"),
@@ -113,7 +113,7 @@ impl State for Cubes {
                 });
 
         let camera_bind_group_layout =
-            display
+            renderer
                 .device
                 .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                     entries: &[wgpu::BindGroupLayoutEntry {
@@ -129,7 +129,7 @@ impl State for Cubes {
                     label: Some("camera_bind_group_layout"),
                 });
 
-        let camera_bind_group = display
+        let camera_bind_group = renderer
             .device
             .create_bind_group(&wgpu::BindGroupDescriptor {
                 layout: &camera_bind_group_layout,
@@ -143,8 +143,8 @@ impl State for Cubes {
         // Model
 
         let obj_model = Model::Load(
-            &display.device,
-            &display.queue,
+            &renderer.device,
+            &renderer.queue,
             &texture_bind_group_layout,
             PathBuf::from("./Content/SM_Cube.obj"),
         )
@@ -152,7 +152,7 @@ impl State for Cubes {
 
         // Shader
 
-        let shader = display
+        let shader = renderer
             .device
             .create_shader_module(&wgpu::ShaderModuleDescriptor {
                 label: Some("shader.wgsl"),
@@ -162,12 +162,12 @@ impl State for Cubes {
         // Texture
 
         let depth_texture =
-            Texture::CreateDepthTexture(&display.device, &display.config, "depth_texture");
+            Texture::CreateDepthTexture(&renderer.device, &renderer.config, "depth_texture");
 
         // Pipeline
 
         let render_pipeline_layout =
-            display
+            renderer
                 .device
                 .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                     label: Some("Render Pipeline Layout"),
@@ -175,54 +175,70 @@ impl State for Cubes {
                     push_constant_ranges: &[],
                 });
 
-        let render_pipeline =
-            display
-                .device
-                .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                    label: Some("Render Pipeline"),
-                    layout: Some(&render_pipeline_layout),
-                    vertex: wgpu::VertexState {
-                        module: &shader,
-                        entry_point: "main",
-                        buffers: &[ModelVertex::GetDescriptor(), InstanceRaw::GetDescriptor()],
-                    },
-                    fragment: Some(wgpu::FragmentState {
-                        module: &shader,
-                        entry_point: "main",
-                        targets: &[wgpu::ColorTargetState {
-                            format: display.config.format,
-                            blend: Some(wgpu::BlendState {
-                                color: wgpu::BlendComponent::REPLACE,
-                                alpha: wgpu::BlendComponent::REPLACE,
-                            }),
-                            write_mask: wgpu::ColorWrites::ALL,
-                        }],
-                    }),
-                    primitive: wgpu::PrimitiveState {
-                        topology: wgpu::PrimitiveTopology::TriangleList,
-                        strip_index_format: None,
-                        front_face: wgpu::FrontFace::Ccw,
-                        cull_mode: Some(wgpu::Face::Back),
-                        // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                        polygon_mode: wgpu::PolygonMode::Fill,
-                        // Requires Features::DEPTH_CLAMPING
-                        clamp_depth: false,
-                        // Requires Features::CONSERVATIVE_RASTERIZATION
-                        conservative: false,
-                    },
-                    depth_stencil: Some(wgpu::DepthStencilState {
-                        format: Texture::DEPTH_FORMAT,
-                        depth_write_enabled: true,
-                        depth_compare: wgpu::CompareFunction::Less,
-                        stencil: wgpu::StencilState::default(),
-                        bias: wgpu::DepthBiasState::default(),
-                    }),
-                    multisample: wgpu::MultisampleState {
-                        count: 1,
-                        mask: !0,
-                        alpha_to_coverage_enabled: false,
-                    },
-                });
+        let render_pipeline = {
+            let mut layout = ModelVertex::GetLayout();
+
+            let attributes = layout
+                .attributes
+                .drain(..)
+                .map(|x| x.into())
+                .collect::<Vec<_>>();
+
+            let wgpu_layout = wgpu::VertexBufferLayout {
+                array_stride: layout.stride as wgpu::BufferAddress,
+                step_mode: layout.step_mode.into(),
+                attributes: attributes.as_ref(),
+            };
+
+            renderer
+            .device
+            .create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("Render Pipeline"),
+                layout: Some(&render_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader,
+                    entry_point: "main",
+                    buffers: &[wgpu_layout, InstanceRaw::GetLayout()],
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &shader,
+                    entry_point: "main",
+                    targets: &[wgpu::ColorTargetState {
+                        format: renderer.config.format,
+                        blend: Some(wgpu::BlendState {
+                            color: wgpu::BlendComponent::REPLACE,
+                            alpha: wgpu::BlendComponent::REPLACE,
+                        }),
+                        write_mask: wgpu::ColorWrites::ALL,
+                    }],
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    // Requires Features::DEPTH_CLAMPING
+                    clamp_depth: false,
+                    // Requires Features::CONSERVATIVE_RASTERIZATION
+                    conservative: false,
+                },
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: Texture::DEPTH_FORMAT,
+                    depth_write_enabled: true,
+                    depth_compare: wgpu::CompareFunction::Less,
+                    stencil: wgpu::StencilState::default(),
+                    bias: wgpu::DepthBiasState::default(),
+                }),
+                multisample: wgpu::MultisampleState {
+                    count: 1,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+            })
+        };
+
 
         Ok(Self {
             render_pipeline,
@@ -238,32 +254,32 @@ impl State for Cubes {
         })
     }
 
-    fn Input(&mut self, display: &Display, event: &WindowEvent) -> bool {
+    fn Input(&mut self, renderer: &mut Renderer, event: &WindowEvent) -> bool {
         self.camera_controller.ProcessEvents(event)
     }
 
-    fn Update(&mut self, display: &Display, delta: Duration) {
+    fn Update(&mut self, renderer: &mut Renderer, delta: Duration) {
         self.camera_controller.UpdateCamera(&mut self.camera);
         self.camera_uniform.UpdateViewProjection(&self.camera);
-        display.queue.write_buffer(
+        renderer.queue.write_buffer(
             &self.camera_buffer,
             0,
             bytemuck::cast_slice(&[self.camera_uniform]),
         );
     }
 
-    fn Resize(&mut self, display: &Display) {
+    fn Resize(&mut self, renderer: &mut Renderer) {
         self.depth_texture =
-            Texture::CreateDepthTexture(&display.device, &display.config, "depth_texture");
+            Texture::CreateDepthTexture(&renderer.device, &renderer.config, "depth_texture");
     }
 
-    fn Draw(&mut self, display: &mut Display) -> Result<(), wgpu::SurfaceError> {
-        let output = display.surface.get_current_texture().unwrap();
+    fn Draw(&mut self, renderer: &mut Renderer) -> Result<(), wgpu::SurfaceError> {
+        let output = renderer.surface.get_current_texture().unwrap();
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        let mut encoder = display
+        let mut encoder = renderer
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
@@ -304,7 +320,7 @@ impl State for Cubes {
             );
         }
 
-        display.queue.submit(std::iter::once(encoder.finish()));
+        renderer.queue.submit(std::iter::once(encoder.finish()));
         output.present();
 
         Ok(())

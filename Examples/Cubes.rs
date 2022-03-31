@@ -183,12 +183,12 @@ impl State for Cubes {
                     layout: Some(&render_pipeline_layout),
                     vertex: wgpu::VertexState {
                         module: &shader,
-                        entry_point: "main",
+                        entry_point: "vs_main",
                         buffers: &[ModelVertex::GetDescriptor(), InstanceRaw::GetDescriptor()],
                     },
                     fragment: Some(wgpu::FragmentState {
                         module: &shader,
-                        entry_point: "main",
+                        entry_point: "fs_main",
                         targets: &[wgpu::ColorTargetState {
                             format: display.config.format,
                             blend: Some(wgpu::BlendState {

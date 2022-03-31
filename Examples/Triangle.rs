@@ -99,7 +99,7 @@ impl State for Triangle {
                     layout: Some(&render_pipeline_layout),
                     vertex: wgpu::VertexState {
                         module: &shader_module,
-                        entry_point: "main",
+                        entry_point: "vs_main",
                         buffers: &[wgpu::VertexBufferLayout {
                             array_stride: std::mem::size_of::<TriangleVertex>()
                                 as wgpu::BufferAddress,
@@ -120,7 +120,7 @@ impl State for Triangle {
                     },
                     fragment: Some(wgpu::FragmentState {
                         module: &shader_module,
-                        entry_point: "main",
+                        entry_point: "fs_main",
                         targets: &[wgpu::ColorTargetState {
                             format: renderer.config.format,
                             blend: Some(wgpu::BlendState::REPLACE),
@@ -133,7 +133,7 @@ impl State for Triangle {
                         front_face: wgpu::FrontFace::Ccw,
                         cull_mode: Some(wgpu::Face::Back),
                         polygon_mode: wgpu::PolygonMode::Fill,
-                        clamp_depth: false,
+                        unclipped_depth: false,
                         conservative: false,
                     },
                     depth_stencil: None,
@@ -142,6 +142,7 @@ impl State for Triangle {
                         mask: !0,
                         alpha_to_coverage_enabled: false,
                     },
+                    multiview: None,
                 })
         };
 

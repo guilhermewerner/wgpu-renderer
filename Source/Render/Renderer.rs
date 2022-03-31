@@ -16,7 +16,7 @@ impl Renderer {
     pub async fn New(window: Window) -> Result<Self> {
         let size = window.inner_size();
 
-        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        let instance = wgpu::Instance::new(wgpu::Backends::DX12);
         let surface = unsafe { instance.create_surface(&window) };
 
         let adapter = instance

@@ -5,7 +5,8 @@ use std::time::Instant;
 use winit::dpi::LogicalSize;
 use winit::event::*;
 use winit::event_loop::{ControlFlow, EventLoop};
-use winit::window::WindowBuilder;
+use winit::monitor::{MonitorHandle, VideoMode};
+use winit::window::{Fullscreen, WindowBuilder};
 
 /// Runtime state executor and event loop.
 pub struct Runtime;
@@ -16,8 +17,11 @@ impl Runtime {
 
         let event_loop = EventLoop::new();
 
+        //let monitor = event_loop.available_monitors().nth(0);
+
         let window = WindowBuilder::new()
             .with_title("Graphics")
+            //.with_fullscreen(Some(Fullscreen::Borderless(monitor)))
             .with_inner_size(LogicalSize::new(1280, 720))
             .build(&event_loop)?;
 

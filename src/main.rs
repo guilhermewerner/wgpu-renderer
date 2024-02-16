@@ -1,5 +1,8 @@
+use anyhow::Result;
 use renderer::run;
 
-fn main() {
-    run();
+#[tokio::main]
+async fn main() -> Result<()> {
+    run().await;
+    Ok(())
 }

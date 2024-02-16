@@ -17,11 +17,15 @@ name = "renderer"
 path = "src/main.rs"
 
 [dependencies]
+anyhow = "1.0"
 cfg-if = "1"
 env_logger = "0.10"
 log = "0.4"
 wgpu = "0.18"
 winit = "0.28"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.36.0", features = ["full"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"

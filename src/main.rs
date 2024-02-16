@@ -1,1 +1,5 @@
-fn main() {}
+use renderer::run;
+
+fn main() {
+    run();
+}

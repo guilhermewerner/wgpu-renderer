@@ -1,1 +1,1 @@
-# WGPU Renderer
+# Renderer

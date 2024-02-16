@@ -1,34 +1,19 @@
 [package]
 name = "renderer"
 version = "0.0.1"
-description = "WGPU Renderer"
+description = "Renderer"
 repository = "https://github.com/GuilhermeWerner/Renderer"
 license = "MIT"
 edition = "2021"
 publish = false
 
 [lib]
-name = "Graphics"
+name = "renderer"
 crate-type = ["rlib"]
-path = "Source/lib.rs"
+path = "src/lib.rs"
 
-[[example]]
-name = "Cubes"
-path = "Examples/Cubes.rs"
-
-[[example]]
-name = "Triangle"
-path = "Examples/Triangle.rs"
+[[bin]]
+name = "renderer"
+path = "src/main.rs"
 
 [dependencies]
-anyhow = "1.0"
-bytemuck = { version = "1.4", features = [ "derive" ] }
-cgmath = "0.18"
-env_logger = "0.9"
-image = "0.24.1"
-log = "0.4"
-pollster = "0.2"
-serde = { version = "1.0", features = ["derive"] }
-tobj = "3.0"
-wgpu ={ git = "https://github.com/GuilhermeWerner/wgpu" }
-winit = "0.26.1"

@@ -25,6 +25,7 @@ env_logger = "0.10"
 log = "0.4"
 wgpu = "0.18"
 winit = "0.28"
+tobj = { version = "3.2.1", features = ["async"] }
 image = { version = "0.24", default-features = false, features = [
     "png",
     "jpeg",
@@ -36,7 +37,18 @@ tokio = { version = "1.36.0", features = ["full"] }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
 console_log = "1.0"
+reqwest = { version = "0.11" }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.30"
-web-sys = { version = "0.3", features = ["Document", "Window", "Element"] }
 wgpu = { version = "0.18.0", features = ["webgl"] }
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Window",
+    "Element",
+    "Location",
+] }
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"

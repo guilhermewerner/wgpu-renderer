@@ -156,6 +156,21 @@ impl State {
             .await
             .unwrap();
 
+        let adapter_info = adapter.get_info();
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            println!("GPU: {}", adapter_info.name);
+            println!("RHI: {:?}", adapter_info.backend);
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            use web_sys::console;
+            console::log_1(&format!("GPU: {}", adapter_info.name).into());
+            console::log_1(&format!("RHI: {:?}", adapter_info.backend).into());
+        }
+
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {

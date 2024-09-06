@@ -1,4 +1,5 @@
 use cgmath::prelude::*;
+use std::time::{Duration, Instant};
 use wgpu::util::DeviceExt;
 use winit::{
     dpi::LogicalSize,
@@ -53,6 +54,7 @@ pub async fn run() {
     }
 
     let mut state = State::new(window).await;
+    let mut last_update = Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
         match event {
@@ -98,6 +100,11 @@ pub async fn run() {
             Event::MainEventsCleared => {
                 // RedrawRequested will only trigger once unless we manually
                 // request it.
+
+                let now = Instant::now();
+                state.delta_time = now - last_update;
+                last_update = now;
+
                 state.window().request_redraw();
             }
             _ => {}
@@ -127,6 +134,7 @@ pub struct State {
     instance_buffer: wgpu::Buffer,
     depth_texture: Texture,
     obj_model: Model,
+    delta_time: Duration,
 }
 
 impl State {
@@ -295,7 +303,7 @@ impl State {
             label: Some("diffuse_bind_group"),
         });
 
-        let camera_controller = CameraController::new(0.2);
+        let camera_controller = CameraController::new(10.0);
 
         let camera = Camera {
             // position the camera 1 unit up and 2 units back
@@ -423,6 +431,7 @@ impl State {
             instance_buffer,
             depth_texture,
             obj_model,
+            delta_time: Duration::default(),
         }
     }
 
@@ -446,7 +455,7 @@ impl State {
     }
 
     fn update(&mut self) {
-        self.camera_controller.update_camera(&mut self.camera);
+        self.camera_controller.update_camera(&mut self.camera, self.delta_time);
         self.camera_uniform.update_view_proj(&self.camera);
         self.queue.write_buffer(
             &self.camera_buffer,

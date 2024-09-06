@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent};
 
 pub struct Camera {
@@ -108,19 +110,23 @@ impl CameraController {
         }
     }
 
-    pub fn update_camera(&self, camera: &mut Camera) {
+    pub fn update_camera(&self, camera: &mut Camera, delta_time: Duration) {
         use cgmath::InnerSpace;
         let forward = camera.target - camera.eye;
         let forward_norm = forward.normalize();
         let forward_mag = forward.magnitude();
 
+        // Calculate the speed taking into account the delta time
+        let speed = self.speed * delta_time.as_secs_f32();
+        println!("speed: {}, delta_time: {:?}", speed, delta_time);
+
         // Prevents glitching when the camera gets too close to the
         // center of the scene.
-        if self.is_forward_pressed && forward_mag > self.speed {
-            camera.eye += forward_norm * self.speed;
+        if self.is_forward_pressed && forward_mag > speed {
+            camera.eye += forward_norm * speed;
         }
         if self.is_backward_pressed {
-            camera.eye -= forward_norm * self.speed;
+            camera.eye -= forward_norm * speed;
         }
 
         let right = forward_norm.cross(camera.up);
@@ -133,10 +139,10 @@ impl CameraController {
             // Rescale the distance between the target and the eye so
             // that it doesn't change. The eye, therefore, still
             // lies on the circle made by the target and eye.
-            camera.eye = camera.target - (forward + right * self.speed).normalize() * forward_mag;
+            camera.eye = camera.target - (forward + right * speed).normalize() * forward_mag;
         }
         if self.is_left_pressed {
-            camera.eye = camera.target - (forward - right * self.speed).normalize() * forward_mag;
+            camera.eye = camera.target - (forward - right * speed).normalize() * forward_mag;
         }
     }
 }

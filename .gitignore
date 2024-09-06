@@ -1,4 +1,6 @@
 package/
+src/wasm/*
 target/
 
+!src/wasm/index.html
 Cargo.lock
